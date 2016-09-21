@@ -12,17 +12,17 @@ def func(a):
     return val
 
 
-def worker(x, args, rq):
-    #qh = logging.handlers.QueueHandler(eq)
-    #root = logging.getLogger()
-    #root.setLevel(logging.DEBUG)
-    #root.addHandler(qh)
+def worker(x, args, rq, eq):
+    qh = logging.handlers.QueueHandler(eq)
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+    root.addHandler(qh)
     try:
         print('in worker: ', x(*args))
         rq.put(x(*args))
     except Exception as e:
         print('error')
-        #root.log(logging.DEBUG, e)
+        root.log(logging.DEBUG, e)
 
 
 def listener(rq):
@@ -40,7 +40,7 @@ def logger_thread(q):
         if record is None:
             print('logger break')
             break
-        #print('logger', record)
+        print('logger', record)
         logger = logging.getLogger(record.name)
         logger.handle(record)
 
@@ -53,7 +53,7 @@ def main():
     lp.start()
     with Pool(processes=4) as pool:
         pool.apply_async(listener, args=(results_q, ))
-        jobs = [pool.apply_async(worker, args=(func, [x], results_q,)) for x
+        jobs = [pool.apply_async(worker, args=(func, [x], results_q, exc_q)) for x
                 in range(10)]
 
         for job in jobs:
