@@ -51,21 +51,19 @@ def main():
     exc_q = m.Queue()
     lp = threading.Thread(target=logger_thread, args=(exc_q,))
     lp.start()
-    pool = Pool(3)
-    #with Pool(processes=4) as pool:
-    pool.apply_async(listener, args=(results_q, ))
-    jobs = [pool.apply_async(worker, args=(func, [x], results_q,)) for x
-            in range(10)]
+    with Pool(processes=4) as pool:
+        pool.apply_async(listener, args=(results_q, ))
+        jobs = [pool.apply_async(worker, args=(func, [x], results_q,)) for x
+                in range(10)]
 
-    for job in jobs:
-        job.get()
+        for job in jobs:
+            job.get()
 
-    results_q.put(None)
-    exc_q.put(None)
+        results_q.put(None)
+        exc_q.put(None)
 
-    lp.join()
-    pool.close()
-    pool.join()
+        lp.join()
+
 
 if __name__ == '__main__':
     import sys; sys.exit(main())
