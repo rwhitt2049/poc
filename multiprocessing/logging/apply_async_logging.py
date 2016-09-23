@@ -2,7 +2,8 @@ from multiprocessing import Pool, Queue, Manager
 import logging
 import threading
 import logging.handlers
-
+from logging_tree import printout
+logging.basicConfig(level='DEBUG', filename='worker.log')
 
 def func(a):
     if 0 <= a < 7:
@@ -17,12 +18,13 @@ def worker(x, args, rq, eq):
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
     root.addHandler(qh)
+    wlog = logging.getLogger('worker_process')
     try:
         print('in worker: ', x(*args))
         rq.put(x(*args))
     except Exception as e:
         print('error')
-        root.log(logging.DEBUG, e)
+        wlog.exception(e)
 
 
 def listener(rq):
@@ -41,8 +43,8 @@ def logger_thread(q):
             print('logger break')
             break
         print('logger', record)
-        logger = logging.getLogger(record.name)
-        logger.handle(record)
+        #logger = logging.getLogger(record.name)
+        #logger.handle(record)
 
 
 def main():
@@ -53,8 +55,7 @@ def main():
     lp.start()
     with Pool(processes=4) as pool:
         pool.apply_async(listener, args=(results_q, ))
-        jobs = [pool.apply_async(worker, args=(func, [x], results_q, exc_q)) for x
-                in range(10)]
+        jobs = [pool.apply_async(worker, args=(func, [x], results_q, exc_q)) for x in range(10)]
 
         for job in jobs:
             job.get()
@@ -63,6 +64,7 @@ def main():
         exc_q.put(None)
 
         lp.join()
+    printout()
 
 
 if __name__ == '__main__':
