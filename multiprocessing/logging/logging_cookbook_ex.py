@@ -72,14 +72,22 @@ def worker_process(q):
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
     root.addHandler(qh)
-    levels = [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR,
-              logging.CRITICAL]
-    loggers = ['foo', 'foo.bar', 'foo.bar.baz',
-               'spam', 'spam.ham', 'spam.ham.eggs']
-    for i in range(100):
-        lvl = random.choice(levels)
-        logger = logging.getLogger(random.choice(loggers))
-        logger.log(lvl, 'Message no. %d', i)
+    foo = logging.getLogger('foo')
+    foobar = logging.getLogger('foo.bar')
+    foobarbaz = logging.getLogger('foo.bar.baz')
+
+    foo.debug('worker_proces foo debug')
+    foobar.info('worker_proces foobar info')
+    foobarbaz.error('worker_proces foobarbaz error')
+
+    spam = logging.getLogger('spam')
+    spamham = logging.getLogger('spam.ham')
+    spamhameggs = logging.getLogger('spam.ham.eggs')
+
+    spam.debug('worker_proces spam debug')
+    spamham.info('worker_proces spamham info')
+    spamhameggs.error('worker_proces spamhameggs error')
+
 
 if __name__ == '__main__':
     q = Queue()
@@ -91,6 +99,8 @@ if __name__ == '__main__':
 
     sh = logging.StreamHandler()
     sh.setLevel(logging.INFO)
+    sfmt = logging.Formatter(FMT)
+    sh.setFormatter(sfmt)
 
     foo = logging.getLogger('foo')
     fh = logging.FileHandler('mplog-foo.log')
@@ -98,17 +108,24 @@ if __name__ == '__main__':
     fh.setFormatter(ft)
     foo.addHandler(fh)
 
+    spam = logging.getLogger('spam')
     mpl = logging.FileHandler('mplog.log')
-    mpl.setFormatter(FMT)
+    mpl.setFormatter(ft)
 
     mple = logging.FileHandler('mplog-errors.log')
     mple.setLevel(logging.ERROR)
-    mple.setFormatter(FMT)
+    mple.setFormatter(ft)
 
     root = logging.getLogger()
+    root.setLevel(logging.INFO)
     root.addHandler(sh)
     root.addHandler(mpl)
     root.addHandler(mple)
+
+    # Messages to the logger need to come after you add their handlers
+    # to the root
+    spam.info('spam info in the main')
+    foo.info('foo info in the main')
 
     #logging.config.dictConfig(d)
     lp = threading.Thread(target=logger_thread, args=(q,))
