@@ -5,54 +5,57 @@ from multiprocessing import Process, Queue
 import random
 import threading
 import time
+from logging_tree import printout
+
+FMT = '%(asctime)s %(name)-15s %(levelname)-8s %(processName)-10s %(message)s'
 
 """
 Example from: https://docs.python.org/3/howto/logging-cookbook.html
 """
 
 d = {
-        'version': 1,
-        'formatters': {
-            'detailed': {
-                'class': 'logging.Formatter',
-                'format': '%(asctime)s %(name)-15s %(levelname)-8s %(processName)-10s %(message)s'
-            }
+    'version': 1,
+    'formatters': {
+        'detailed': {
+            'class': 'logging.Formatter',
+            'format': '%(asctime)s %(name)-15s %(levelname)-8s %(processName)-10s %(message)s'
+        }
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'level': 'INFO',
         },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'level': 'INFO',
-            },
-            'file': {
-                'class': 'logging.FileHandler',
-                'filename': 'mplog.log',
-                'mode': 'w',
-                'formatter': 'detailed',
-            },
-            'foofile': {
-                'class': 'logging.FileHandler',
-                'filename': 'mplog-foo.log',
-                'mode': 'w',
-                'formatter': 'detailed',
-            },
-            'errors': {
-                'class': 'logging.FileHandler',
-                'filename': 'mplog-errors.log',
-                'mode': 'w',
-                'level': 'ERROR',
-                'formatter': 'detailed',
-            },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'mplog.log',
+            'mode': 'w',
+            'formatter': 'detailed',
         },
-        'loggers': {
-            'foo': {
-                'handlers': ['foofile']
-            }
+        'foofile': {
+            'class': 'logging.FileHandler',
+            'filename': 'mplog-foo.log',
+            'mode': 'w',
+            'formatter': 'detailed',
         },
-        'root': {
-            'level': 'DEBUG',
-            'handlers': ['console', 'file', 'errors']
+        'errors': {
+            'class': 'logging.FileHandler',
+            'filename': 'mplog-errors.log',
+            'mode': 'w',
+            'level': 'ERROR',
+            'formatter': 'detailed',
         },
-    }
+    },
+    'loggers': {
+        'foo': {
+            'handlers': ['foofile']
+        }
+    },
+    'root': {
+        'level': 'DEBUG',
+        'handlers': ['console', 'file', 'errors']
+    },
+}
 
 
 def logger_thread(q):
@@ -85,7 +88,29 @@ if __name__ == '__main__':
         wp = Process(target=worker_process, name='worker %d' % (i + 1), args=(q,))
         workers.append(wp)
         wp.start()
-    logging.config.dictConfig(d)
+
+    sh = logging.StreamHandler()
+    sh.setLevel(logging.INFO)
+
+    foo = logging.getLogger('foo')
+    fh = logging.FileHandler('mplog-foo.log')
+    ft = logging.Formatter(FMT)
+    fh.setFormatter(ft)
+    foo.addHandler(fh)
+
+    mpl = logging.FileHandler('mplog.log')
+    mpl.setFormatter(FMT)
+
+    mple = logging.FileHandler('mplog-errors.log')
+    mple.setLevel(logging.ERROR)
+    mple.setFormatter(FMT)
+
+    root = logging.getLogger()
+    root.addHandler(sh)
+    root.addHandler(mpl)
+    root.addHandler(mple)
+
+    #logging.config.dictConfig(d)
     lp = threading.Thread(target=logger_thread, args=(q,))
     lp.start()
     # At this point, the main process could do some useful work of its own
@@ -95,3 +120,4 @@ if __name__ == '__main__':
     # And now tell the logging thread to finish up, too
     q.put(None)
     lp.join()
+    printout()
