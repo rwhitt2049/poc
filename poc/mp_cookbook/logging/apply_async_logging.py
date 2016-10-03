@@ -1,8 +1,11 @@
-from multiprocessing import Pool, Queue, Manager
 import logging
-import threading
 import logging.handlers
+import threading
+
 from logging_tree import printout
+
+from multiprocessing import Pool, Manager
+
 logging.basicConfig(level='DEBUG', filename='worker.log')
 
 def func(a):

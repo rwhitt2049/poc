@@ -1,11 +1,12 @@
 import logging
 import logging.config
 import logging.handlers
-from multiprocessing import Process, Queue
-import random
 import threading
-import time
+
 import logging_tree as lt
+
+from multiprocessing import Process, Queue
+
 
 #logging.basicConfig(level='DEBUG', filename='worker.log')
 
