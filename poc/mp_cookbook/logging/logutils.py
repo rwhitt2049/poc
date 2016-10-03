@@ -1,16 +1,17 @@
+import datetime
 import logging
 import logging.config
 import logging.handlers
-from functools import wraps
-import datetime
-from multiprocessing import Manager, Queue
 import os
+from functools import wraps
+
+from multiprocessing import Manager
 
 
 class QueueLogging(object):
 
     def __init__(self, folder='logs', debug=True,
-                 handler=_SimpleHandler(), respect_handler_level=False):
+                 handler=None, respect_handler_level=False):
         self.q = Manager().Queue()
         config = _config_listener(folder, debug)
         logging.config.dictConfig(config)
@@ -23,7 +24,7 @@ class QueueLogging(object):
         self.lp.stop()
 
 
-class _SimpleHandler:
+class GeneralHandler:
     """
     A simple handler for logging events.
     """
@@ -35,10 +36,10 @@ class _SimpleHandler:
 
 class LoggingMixin(object):
     """
-    Convenience super-class to have a logger configured with the class name.
+    Convenience superclass to have a logger configured with the class name.
 
-    Idea from Airflow:
-        https://github.com/apache/incubator-airflow/blob/master/airflow/utils/logging.py
+    Idea from Airflow.
+    https://github.com/apache/incubator-airflow/blob/master/airflow/utils/logging.py
     """
 
     @property
